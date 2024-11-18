@@ -1,0 +1,43 @@
+- name: Backup MikroTik Router Configuration
+  hosts: Switches01
+  gather_facts: no
+
+  vars:
+    backup_filename: "mikrotik_backup_{{ inventory_hostname }}_{{ ansible_date_time.iso8601_basic }}.rsc"
+    local_backup_dir: "./router-configs/"
+
+  tasks:
+    - name: Ensure local backup directory exists
+      ansible.builtin.file:
+        path: "{{ local_backup_dir }}"
+        state: directory
+
+    - name: Export router configuration to a file on the router
+      ansible.netcommon.cli_command:
+        command: "/export file=backup-{{ inventory_hostname }}"
+      register: export_result
+
+    - name: Fetch the configuration file from the router
+      ansible.builtin.fetch:
+        src: "backup-{{ inventory_hostname }}.rsc"
+        dest: "{{ local_backup_dir }}{{ backup_filename }}"
+        flat: yes
+
+    - name: Add new files to git
+      ansible.builtin.command:
+        cmd: "git add {{ local_backup_dir }}{{ backup_filename }}"
+      args:
+        chdir: "https://your-git-server.com/Network-Automation.git"
+
+
+    - name: Commit changes to git
+      ansible.builtin.command:
+        cmd: "git commit -m 'Backup of {{ inventory_hostname }} on {{ ansible_date_time.iso8601 }}'"
+      args:
+        chdir: "https://your-git-server.com/Network-Automation.git"
+
+    - name: Push changes to git repository
+      ansible.builtin.command:
+        cmd: "git push origin main"
+      args:
+        chdir: "https://your-git-server.com/Network-Automation.git"

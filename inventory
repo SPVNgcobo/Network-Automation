@@ -1,0 +1,2 @@
+[mikrotik]
+mikrotik_router ansible_host=192.168.1.20 ansible_user=user ansible_ssh_pass=29492 ansible_network_os=community.routeros.routeros
